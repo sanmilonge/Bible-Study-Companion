@@ -1,9 +1,20 @@
-const router = require('express').Router();
-const { register, login, getMe } = require('../controllers/auth.controller');
-const authMiddleware = require('../middleware/auth');
+// middleware/auth.js
+const jwt = require('jsonwebtoken');
 
-router.post('/register', register);
-router.post('/login', login);
-router.get('/me', authMiddleware, getMe);
+module.exports = (req, res, next) => {
+    const authHeader = req.headers.authorization;
 
-module.exports = router;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded; // Attach user info to request
+        next();
+    } catch (err) {
+        res.status(401).json({ error: 'Invalid token' });
+    }
+};
