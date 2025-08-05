@@ -4,6 +4,8 @@ const authMiddleware = require('../middleware/auth');
 
 router.post('/register', authController.register);
 router.post('/login', authController.login);
-router.get('/me', authMiddleware, authController.getMe); // ✅ <-- This is the critical line
+router.get('/me', authMiddleware, authController.getMe);
+router.put('/profile', authMiddleware, authController.updateProfile); // ✅ NEW
+router.put('/password', authMiddleware, authController.updatePassword); // ✅ NEW
 
 module.exports = router;

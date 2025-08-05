@@ -1,3 +1,4 @@
+//controllers/auth.controller.js
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
@@ -48,16 +49,67 @@ exports.login = async (req, res) => {
 // Get current user controller
 exports.getMe = async (req, res) => {
     try {
-        console.log('Decoded userId:', req.userId);
-        const user = await User.findById(req.userId).select('-password');
+        console.log('Decoded user:', req.user); // Should log the full object with id
+
+        const user = await User.findById(req.user.id).select('-password'); // ✅ fixed here
+
         console.log('User record fetched:', user);
 
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
+
         res.json(user);
     } catch (err) {
         console.error('GetMe error:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Update profile
+exports.updateProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const { name, email } = req.body;
+
+        if (name) user.name = name;
+        if (email) user.email = email;
+
+        await user.save();
+
+        res.json({
+            message: 'Profile updated',
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Update password
+exports.updatePassword = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const { current_password, new_password } = req.body;
+
+        const isMatch = await user.comparePassword(current_password);
+        if (!isMatch) return res.status(400).json({ error: 'Incorrect current password' });
+
+        user.password = new_password;
+        await user.save();
+
+        res.json({ message: 'Password updated successfully' });
+    } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
