@@ -11,18 +11,17 @@ function generateToken(userId) {
 exports.register = async (req, res) => {
     try {
         const { name, email, password } = req.body;
-
-        // Check if user already exists
         const exists = await User.findOne({ email });
         if (exists) {
             return res.status(400).json({ error: 'Email already registered' });
         }
 
-        // Create user and generate token
         const user = await User.create({ name, email, password });
+        console.log('Registered user:', user._id, user.email);
         const token = generateToken(user._id);
         res.json({ access_token: token });
     } catch (e) {
+        console.error('Register error:', e);
         res.status(500).json({ error: e.message });
     }
 };
@@ -48,10 +47,17 @@ exports.login = async (req, res) => {
 
 // Get current user controller
 exports.getMe = async (req, res) => {
-    console.log('Decoded userId from token:', req.userId);
-    const user = await
-        User.findById(req.userId).select('-password');
-    console.log('User record:', user);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json(user);
+    try {
+        console.log('Decoded userId:', req.userId);
+        const user = await User.findById(req.userId).select('-password');
+        console.log('User record fetched:', user);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json(user);
+    } catch (err) {
+        console.error('GetMe error:', err);
+        res.status(500).json({ error: err.message });
+    }
 };
