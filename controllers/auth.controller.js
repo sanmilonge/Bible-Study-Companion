@@ -48,15 +48,10 @@ exports.login = async (req, res) => {
 
 // Get current user controller
 exports.getMe = async (req, res) => {
-    try {
-        const user = await User.findById(req.userId).select('-password');
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        res.json(user);
-    } catch (err) {
-        console.error('Get current user error:', err);
-        res.status(500).json({ error: err.message });
-    }
+    console.log('Decoded userId from token:', req.userId);
+    const user = await
+        User.findById(req.userId).select('-password');
+    console.log('User record:', user);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
 };
-
